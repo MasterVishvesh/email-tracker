@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, HTMLResponse
 import datetime
+import os
 
 my_app = FastAPI()
 
@@ -13,6 +14,7 @@ user_db = {
     4: {"email": "kalpitmathur96@gmail.com"},
 }
 
+# TRACKING PIXEL ROUTE
 @my_app.get("/view/{id}")
 async def track_open(id: int, request: Request):
 
@@ -29,7 +31,6 @@ async def track_open(id: int, request: Request):
 
         print("OPENED:", log_entry)
 
-    # Proper transparent GIF
     pixel = (
         b"GIF89a"
         b"\x01\x00\x01\x00"
@@ -50,3 +51,60 @@ async def track_open(id: int, request: Request):
             "Expires": "0",
         },
     )
+
+
+# DASHBOARD ROUTE
+@my_app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+
+    rows = ""
+
+    if os.path.exists(LOG_FILE):
+
+        with open(LOG_FILE, "r") as f:
+
+            lines = f.readlines()
+
+            for line in reversed(lines):
+
+                parts = line.strip().split(" | ")
+
+                if len(parts) == 4:
+
+                    id, email, timestamp, ip = parts
+
+                    rows += f"""
+                    <tr>
+                        <td>{id}</td>
+                        <td>{email}</td>
+                        <td>{timestamp}</td>
+                        <td>{ip}</td>
+                    </tr>
+                    """
+
+    html = f"""
+    <html>
+    <head>
+        <title>Email Tracker Dashboard</title>
+    </head>
+    <body>
+
+    <h2>Email Tracking Dashboard</h2>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Opened At</th>
+            <th>IP</th>
+        </tr>
+
+        {rows}
+
+    </table>
+
+    </body>
+    </html>
+    """
+
+    return HTMLResponse(content=html)
