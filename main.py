@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import Response, HTMLResponse
-import datetime, pytz
+import datetime
+import pytz
 import os
 
 my_app = FastAPI()
@@ -24,15 +25,24 @@ async def track_open(id: int, request: Request):
 
         timestamp = datetime.datetime.now()
         
-        
+        # UTC time
+        utc_time = datetime.datetime.now(pytz.utc)
+
+        # Convert to IST
         ist = pytz.timezone("Asia/Kolkata")
-        IST_timestamp = datetime.now(ist)
+        ist_time = utc_time.astimezone(ist)
+
+        # Format without microseconds
+        utc_formatted = utc_time.strftime("%Y-%m-%d %H:%M:%S")
+        ist_formatted = ist_time.strftime("%Y-%m-%d %H:%M:%S")
+        
+        
         
         
         ip = request.client.host
         email = user_db[id]["email"]
 
-        log_entry = f"{id} | {email} | {timestamp} | {IST_timestamp} | {ip}\n"
+        log_entry = f"{id} | {email} | {utc_formatted} | {ist_formatted} | {ip}\n"
 
         with open(LOG_FILE, "a") as f:
             f.write(log_entry)
@@ -79,14 +89,14 @@ async def dashboard():
 
                 if len(parts) == 5:
 
-                    id, email, timestamp, IST_timestamp, ip = parts
+                    id, email, utc_formatted, ist_formatted, ip = parts
 
                     rows += f"""
                     <tr>
                         <td>{id}</td>
                         <td>{email}</td>
-                        <td>{timestamp}</td>
-                        <td>{IST_timestamp}</td>
+                        <td>{utc_formatted}</td>
+                        <td>{ist_formatted}</td>
                         <td>{ip}</td>
                     </tr>
                     """
