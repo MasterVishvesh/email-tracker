@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import Response, HTMLResponse
+from fastapi.responses import RedirectResponse
 import datetime
 import pytz
 import os
@@ -71,6 +72,14 @@ async def track_open(id: int, request: Request):
     )
 
 
+@my_app.get("/clear-logs")
+async def clear_logs():
+
+    if os.path.exists(LOG_FILE):
+        open(LOG_FILE, "w").close()  # empties the file
+
+    return RedirectResponse(url="/dashboard")
+
 # DASHBOARD ROUTE
 @my_app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard():
@@ -109,7 +118,13 @@ async def dashboard():
     <body>
 
     <h2>Email Tracking Dashboard</h2>
-
+    
+    <a href="/clear-logs">
+        <button style="padding:8px 15px; margin-bottom:15px;">
+            Clear Logs
+        </button>
+    </a>
+    
     <table border="1" cellpadding="10">
         <tr>
             <th>ID</th>
