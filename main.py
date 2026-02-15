@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import Response, HTMLResponse
-import datetime
+import datetime, pytz
 import os
 
 my_app = FastAPI()
@@ -23,10 +23,16 @@ async def track_open(id: int, request: Request):
     if id in user_db:
 
         timestamp = datetime.datetime.now()
+        
+        
+        ist = pytz.timezone("Asia/Kolkata")
+        IST_timestamp = datetime.now(ist)
+        
+        
         ip = request.client.host
         email = user_db[id]["email"]
 
-        log_entry = f"{id} | {email} | {timestamp} | {ip}\n"
+        log_entry = f"{id} | {email} | {timestamp} | {IST_timestamp} | {ip}\n"
 
         with open(LOG_FILE, "a") as f:
             f.write(log_entry)
@@ -71,15 +77,16 @@ async def dashboard():
 
                 parts = line.strip().split(" | ")
 
-                if len(parts) == 4:
+                if len(parts) == 5:
 
-                    id, email, timestamp, ip = parts
+                    id, email, timestamp, IST_timestamp, ip = parts
 
                     rows += f"""
                     <tr>
                         <td>{id}</td>
                         <td>{email}</td>
                         <td>{timestamp}</td>
+                        <td>{IST_timestamp}</td>
                         <td>{ip}</td>
                     </tr>
                     """
@@ -97,7 +104,8 @@ async def dashboard():
         <tr>
             <th>ID</th>
             <th>Email</th>
-            <th>Opened At</th>
+            <th>Opened At(UST)</th>
+            <th>Opened At(IST)</th>
             <th>IP</th>
         </tr>
 
